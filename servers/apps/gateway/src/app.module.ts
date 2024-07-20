@@ -1,14 +1,27 @@
 import { Module } from '@nestjs/common';
-import { AppService } from './app.service';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
-import { IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
-import { authContext } from './auth.context';
+import { IntrospectAndCompose } from '@apollo/gateway';
 import { LoggerModule } from '@app/common/logger';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from './services/config/config.service';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    GraphQLModule.forRoot<ApolloGatewayDriverConfig>({
+      driver: ApolloGatewayDriver,
+      gateway: {
+        supergraphSdl: new IntrospectAndCompose({
+          subgraphs: [
+            {
+              name: 'users',
+              url: 'http://localhost:3001/graphql',
+            },
+          ],
+        }),
+      },
+    }),
     // GraphQLModule.forRoot<ApolloGatewayDriverConfig>({
     //   driver: ApolloGatewayDriver,
     //   server: {
@@ -36,37 +49,37 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     //     },
     //   },
     // }),
-    GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
-      driver: ApolloGatewayDriver,
-      useFactory: (configService: ConfigService) => ({
-        gateway: {
-          supergraphSdl: new IntrospectAndCompose({
-            subgraphs: [
-              {
-                name: 'users',
-                url: configService.getOrThrow('USERS_GRAPHQL_RUL'),
-              },
-            ],
-          }),
-          buildService({ url }) {
-            return new RemoteGraphQLDataSource({
-              url,
-              willSendRequest({ request, context }) {
-                request.http.headers.set(
-                  'user',
-                  context.user ? JSON.stringify(context.user) : null,
-                );
-              },
-            });
-          },
-        },
-      }),
-      inject: [ConfigService],
-    }),
-    ConfigModule.forRoot({ isGlobal: true }),
+    // GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
+    //   driver: ApolloGatewayDriver,
+    //   useFactory: (configService: ConfigService) => ({
+    //     server: { context: authContext },
+    //     gateway: {
+    //       supergraphSdl: new IntrospectAndCompose({
+    //         subgraphs: [
+    //           {
+    //             name: 'users',
+    //             url: configService.getOrThrow('USERS_GRAPHQL_URL'),
+    //           },
+    //         ],
+    //       }),
+    //       buildService({ url }) {
+    //         return new RemoteGraphQLDataSource({
+    //           url,
+    //           willSendRequest({ request, context }) {
+    //             request.http.headers.set(
+    //               'user',
+    //               context.user ? JSON.stringify(context.user) : null,
+    //             );
+    //           },
+    //         });
+    //       },
+    //     },
+    //   }),
+    //   inject: [ConfigService],
+    // }),
     LoggerModule,
   ],
   controllers: [],
-  providers: [AppService],
+  providers: [],
 })
 export class AppModule {}

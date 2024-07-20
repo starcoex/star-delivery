@@ -1,16 +1,4 @@
 services:
-  users:
-    build:
-      context: .
-      dockerfile: ./apps/users/Dockerfile
-      target: development
-    command: pnpm run start:dev users
-    env_file:
-      - ./apps/users/.env
-    ports:
-      - '3001:3001'
-    volumes:
-      - .:/usr/src/app
   gateway:
     build:
       context: .
@@ -23,3 +11,69 @@ services:
       - '3000:3000'
     volumes:
       - .:/usr/src/app
+  users:
+    build:
+      context: .
+      dockerfile: ./apps/users/Dockerfile
+      target: development
+    command: sh -c "pnpm prisma migrate deploy --schema apps/users/prisma/schema.prisma && pnpm prisma generate --schema apps/users/prisma/schema.prisma && pnpm run start:dev users"
+    env_file:
+      - ./apps/users/.env
+    ports:
+      - '3001:3001'
+    volumes:
+      - .:/usr/src/app
+  reservations:
+    build:
+      context: .
+      dockerfile: ./apps/reservations/Dockerfile
+      target: development
+    command: sh -c "pnpm prisma migrate deploy --schema apps/reservations/prisma/schema.prisma && pnpm prisma generate --schema apps/reservations/prisma/schema.prisma && pnpm run start:dev reservations"
+    env_file:
+      - ./apps/reservations/.env
+    ports:
+      - '3002:3002'
+    volumes:
+      - .:/usr/src/app
+  auth:
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile
+      target: development
+    command: sh -c "pnpm prisma migrate deploy --schema apps/auth/prisma/schema.prisma && pnpm prisma generate --schema apps/auth/prisma/schema.prisma && pnpm run start:dev auth"
+    env_file:
+      - ./apps/auth/.env
+    ports:
+      - '3003:3003'
+    volumes:
+      - .:/usr/src/app
+  payments:
+    build:
+      context: .
+      dockerfile: ./apps/payments/Dockerfile
+      target: development
+    command: pnpm run start:dev payments
+    env_file:
+      - ./apps/payments/.env
+    ports:
+      - '3004:3004'
+    volumes:
+      - .:/usr/src/app
+  notifications:
+    build:
+      context: .
+      dockerfile: ./apps/notifications/Dockerfile
+      target: development
+    command: pnpm run start:dev notifications
+    env_file:
+      - ./apps/notifications/.env
+    ports:
+      - '3005:3005'
+    volumes:
+      - .:/usr/src/app
+  mysql:
+    image: mysql:latest
+    env_file:
+      - .env
+    ports:
+      - '3306:3306'
