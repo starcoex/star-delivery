@@ -3,14 +3,22 @@ import { ReservationsService } from './reservations.service';
 import { Reservation } from './entities/reservation.entity';
 import { CreateReservationInput } from './dto/create-reservation.input';
 import { UpdateReservationInput } from './dto/update-reservation.input';
+import { CurrentUser, User } from '@app/common';
 
 @Resolver(() => Reservation)
 export class ReservationsResolver {
   constructor(private readonly reservationsService: ReservationsService) {}
 
   @Mutation(() => Reservation)
-  createReservation(@Args('createReservationInput') createReservationInput: CreateReservationInput) {
-    return this.reservationsService.create(createReservationInput);
+  createReservation(
+    @Args('createReservationInput')
+    createReservationInput: CreateReservationInput,
+    @CurrentUser() user: User,
+  ) {
+    return this.reservationsService.createReservation(
+      createReservationInput,
+      user,
+    );
   }
 
   @Query(() => [Reservation], { name: 'reservations' })
@@ -24,8 +32,14 @@ export class ReservationsResolver {
   }
 
   @Mutation(() => Reservation)
-  updateReservation(@Args('updateReservationInput') updateReservationInput: UpdateReservationInput) {
-    return this.reservationsService.update(updateReservationInput.id, updateReservationInput);
+  updateReservation(
+    @Args('updateReservationInput')
+    updateReservationInput: UpdateReservationInput,
+  ) {
+    return this.reservationsService.update(
+      updateReservationInput.id,
+      updateReservationInput,
+    );
   }
 
   @Mutation(() => Reservation)

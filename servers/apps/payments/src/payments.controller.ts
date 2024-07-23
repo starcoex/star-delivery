@@ -1,12 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { CreateChargeInput } from '@app/common';
 
 @Controller()
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Get()
-  getHello(): string {
-    return this.paymentsService.getHello();
+  @MessagePattern('create_charge')
+  async createCharge(@Payload() data: CreateChargeInput) {
+    return this.paymentsService.createChare(data);
   }
 }

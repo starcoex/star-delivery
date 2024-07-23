@@ -29,13 +29,17 @@ model Avatars {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  avatar   Avatars?
-  role     Role     @default(USER)
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  phone_number Float?
+  address      String?
+  password     String
+  avatar       Avatars?
+  role         Role     @default(USER)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  @@unique([email, phone_number], name: "unique_email_phone_number")
 }

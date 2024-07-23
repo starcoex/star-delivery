@@ -11,3 +11,12 @@ export class CoreOutput {
   @IsBoolean()
   ok: boolean;
 }
+
+@ObjectType()
+export class ErrorType {
+  @Field()
+  message: string;
+
+  @Field({ nullable: true })
+  code?: string;
+}

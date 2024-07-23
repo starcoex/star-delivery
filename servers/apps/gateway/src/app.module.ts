@@ -1,82 +1,63 @@
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
-import { IntrospectAndCompose } from '@apollo/gateway';
+import { IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
 import { LoggerModule } from '@app/common/logger';
-import { ConfigModule } from '@nestjs/config';
-import { ConfigService } from './services/config/config.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { AUTH_SERVICE } from '@app/common';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    GraphQLModule.forRoot<ApolloGatewayDriverConfig>({
+    GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
-      gateway: {
-        supergraphSdl: new IntrospectAndCompose({
-          subgraphs: [
-            {
-              name: 'users',
-              url: 'http://localhost:3001/graphql',
-            },
-          ],
-        }),
-      },
+      useFactory: (configService: ConfigService) => ({
+        gateway: {
+          supergraphSdl: new IntrospectAndCompose({
+            subgraphs: [
+              {
+                name: 'reservations',
+                url: configService.getOrThrow('RESERVATIONS_GRAPHQL_URL'),
+              },
+              {
+                name: 'auth',
+                url: configService.getOrThrow('AUTH_GRAPHQL_URL'),
+              },
+              {
+                name: 'users',
+                url: configService.getOrThrow('USERS_GRAPHQL_URL'),
+              },
+            ],
+          }),
+          buildService({ url }) {
+            return new RemoteGraphQLDataSource({
+              url,
+              willSendRequest({ request, context }) {
+                request.http.headers.set(
+                  'user',
+                  context.user ? JSON.stringify(context.user) : null,
+                );
+              },
+            });
+          },
+        },
+      }),
+      inject: [ConfigService],
     }),
-    // GraphQLModule.forRoot<ApolloGatewayDriverConfig>({
-    //   driver: ApolloGatewayDriver,
-    //   server: {
-    //     context: authContext,
-    //   },
-    //   gateway: {
-    //     supergraphSdl: new IntrospectAndCompose({
-    //       subgraphs: [
-    //         {
-    //           name: 'users',
-    //           url: 'http://localhost:3001/graphql',
-    //         },
-    //       ],
-    //     }),
-    //     buildService({ url }) {
-    //       return new RemoteGraphQLDataSource({
-    //         url,
-    //         willSendRequest({ request, context }) {
-    //           request.http.headers.set(
-    //             'user',
-    //             context.user ? JSON.stringify(context.user) : null,
-    //           );
-    //         },
-    //       });
-    //     },
-    //   },
-    // }),
-    // GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
-    //   driver: ApolloGatewayDriver,
-    //   useFactory: (configService: ConfigService) => ({
-    //     server: { context: authContext },
-    //     gateway: {
-    //       supergraphSdl: new IntrospectAndCompose({
-    //         subgraphs: [
-    //           {
-    //             name: 'users',
-    //             url: configService.getOrThrow('USERS_GRAPHQL_URL'),
-    //           },
-    //         ],
-    //       }),
-    //       buildService({ url }) {
-    //         return new RemoteGraphQLDataSource({
-    //           url,
-    //           willSendRequest({ request, context }) {
-    //             request.http.headers.set(
-    //               'user',
-    //               context.user ? JSON.stringify(context.user) : null,
-    //             );
-    //           },
-    //         });
-    //       },
-    //     },
-    //   }),
-    //   inject: [ConfigService],
-    // }),
+    ClientsModule.registerAsync([
+      {
+        name: AUTH_SERVICE,
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.getOrThrow('AUTH_HOST'),
+            port: configService.getOrThrow('AUTH_PORT'),
+          },
+        }),
+        inject: [ConfigService],
+      },
+    ]),
     LoggerModule,
   ],
   controllers: [],

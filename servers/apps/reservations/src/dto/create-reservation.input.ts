@@ -1,5 +1,6 @@
+// import { CreateChargeInput } from '@app/common';
 import { CreateChargeInput } from '@app/common';
-import { InputType } from '@nestjs/graphql';
+import { Field, InputType } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import {
   IsDate,
@@ -12,15 +13,18 @@ import {
 export class CreateReservationInput {
   @IsDate()
   @Type(() => Date)
+  @Field()
   startDate: Date;
 
   @IsDate()
   @Type(() => Date)
+  @Field()
   endDate: Date;
 
   @IsDefined()
   @IsNotEmptyObject()
   @ValidateNested()
   @Type(() => CreateChargeInput)
+  @Field(() => CreateChargeInput)
   charge: CreateChargeInput;
 }

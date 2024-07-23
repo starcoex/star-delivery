@@ -5,7 +5,7 @@ import {
   IsNumber,
   ValidateNested,
 } from 'class-validator';
-import { InputType } from '@nestjs/graphql';
+import { Field, InputType } from '@nestjs/graphql';
 import { CardDto } from './card.dto';
 
 @InputType()
@@ -14,8 +14,10 @@ export class CreateChargeInput {
   @IsNotEmptyObject()
   @ValidateNested()
   @Type(() => CardDto)
+  @Field(() => CardDto)
   card: CardDto;
 
   @IsNumber()
+  @Field()
   amount: number;
 }

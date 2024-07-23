@@ -12,7 +12,7 @@ RUN npm install -g pnpm
 COPY apps/gateway apps/gateway
 COPY libs libs
 
-RUN pnpm install -r
+RUN pnpm install 
 
 RUN pnpm run build gateway
 

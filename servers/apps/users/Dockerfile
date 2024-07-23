@@ -4,13 +4,19 @@ WORKDIR /usr/src/app
 
 COPY package.json ./
 COPY pnpm-lock.yaml ./
+COPY tsconfig.json tsconfig.json
+COPY nest-cli.json nest-cli.json
+COPY apps/users/prisma ./prisma
 
 RUN npm install -g pnpm
-RUN pnpm install
+RUN pnpm install 
+RUN pnpm prisma generate
 
-COPY . .
+COPY apps/users apps/users
+COPY libs libs
 
-RUN pnpm run build
+
+RUN pnpm run build users
 
 FROM node:alpine as production
 
@@ -27,4 +33,4 @@ RUN pnpm install --prod
 
 COPY --from=development /usr/src/app/dist ./dist
 
-CMD [ "node", "dist/app/users/main" ]
+CMD [ "pnpm", "run", "start:prod", "dist/app/users/main" ]

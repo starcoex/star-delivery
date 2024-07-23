@@ -1,12 +1,10 @@
 import { ObjectType, Field, Directive } from '@nestjs/graphql';
-import { CoreEntity } from '../../../../../libs/common/src/dto/core.entity';
+import { CoreEntity } from '../../../../../libs/common/src/entities/core.entity';
+import { IsEmail } from 'class-validator';
 
 @ObjectType()
 @Directive('@key(fields:"id")')
-export class Avatars {
-  @Field()
-  id: number;
-
+export class Avatars extends CoreEntity {
   @Field()
   public_id: string;
 
@@ -21,26 +19,24 @@ export class Avatars {
 @Directive('@key(fields:"id")')
 export class User extends CoreEntity {
   @Field()
-  name: number;
+  name: string;
 
+  @IsEmail()
   @Field()
   email: string;
 
   @Field()
   password: string;
 
-  @Field({ nullable: true })
-  phone_number: string;
-
-  @Field({ nullable: true })
+  @Field(() => Avatars, { nullable: true })
   avatar?: Avatars | null;
-
-  @Field({ nullable: true })
-  kakao_id?: string | null;
-
-  @Field({ nullable: true })
-  naver_id?: string | null;
 
   @Field()
   role: string;
+
+  @Field({ nullable: true })
+  address: string;
+
+  @Field({ nullable: true })
+  phone_number: number;
 }

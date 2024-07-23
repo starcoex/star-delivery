@@ -1,28 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateReservationInput } from './dto/create-reservation.input';
 import { UpdateReservationInput } from './dto/update-reservation.input';
 import { PrismaService } from '../prisma/prisma.service';
+import { PAYMENTS_SERVICE } from '@app/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { User } from '@app/common';
 
 @Injectable()
 export class ReservationsService {
-  constructor(private readonly prisma: PrismaService) {}
-  create(createReservationInput: CreateReservationInput) {
-    return 'This action adds a new reservation';
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(PAYMENTS_SERVICE) paymentsService: ClientProxy,
+  ) {}
+
+  async createReservation(
+    createReservationInput: CreateReservationInput,
+    user: User,
+  ) {
+    return this.prisma.reservation.create({
+      data: {
+        startDate: createReservationInput.startDate,
+        endDate: createReservationInput.endDate,
+        userId: user.id,
+        invoiceId: '12345',
+        timestamp: new Date(),
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all reservations`;
+  async findAll() {
+    return this.prisma.reservation.findMany({});
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} reservation`;
+  async findOne(id: number) {
+    return this.prisma.reservation.findFirstOrThrow({ where: { id } });
   }
 
-  update(id: number, updateReservationInput: UpdateReservationInput) {
-    return `This action updates a #${id} reservation`;
+  async update(id: number, updateReservationInput: UpdateReservationInput) {
+    return this.prisma.reservation.update({
+      where: { id },
+      data: updateReservationInput,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} reservation`;
+  async remove(id: number) {
+    return this.prisma.reservation.delete({ where: { id } });
   }
 }
